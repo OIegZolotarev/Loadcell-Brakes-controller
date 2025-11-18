@@ -17,10 +17,21 @@ uint8_t const desc_hid_report[] = {
 };
 
 // Калибровка
-extern float ZERO_VOLTAGE;
-extern float MAX_FORCE_KG;
 
-const float MAX_SENSOR_VOLTAGE = 2.8f;
+typedef struct
+{
+  bool calibrating = false;
+
+  float min_voltage = 1.5f;
+  float max_voltage = 2.8f;
+
+  float max_force = 100;
+  float err_measure = 0.8;
+
+  float q = 0.5f;
+}ad620_settings_t;
+
+extern ad620_settings_t ad620;
 
 // Настройки Load Cell
 const int AD620_OUT_PIN = 28;

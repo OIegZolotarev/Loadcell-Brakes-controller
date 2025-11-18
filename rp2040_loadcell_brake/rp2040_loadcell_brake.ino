@@ -4,6 +4,7 @@
 #include <pico/bootrom.h>
 #include "common.h"
 
+#include "USBSerialCommand.h"
 
 bool debug = false;
 uint8_t debug_level;
@@ -13,6 +14,7 @@ int debug_cycle;
 Adafruit_USBD_CDC usb_serial;
 Adafruit_USBD_HID usb_hid;
 
+SerialCommand console;
 
 
 void setup() {
@@ -21,12 +23,97 @@ void setup() {
   ad620Init();
 
 
+  Con_Printf("=======================\n");
+  Con_Printf("Loadcell brakes controller ready!\n");
+  Con_Printf("type help, to see avaible commands\n");
+  
+  console.addExecuteCommand((const char*)"help", []() 
+  {
+      console.printHelp();
+  });
 
+  console.addExecuteCommand((const char*)"trace_brake", []() 
+  {
+    trace_brake = !trace_brake;
+  });
+
+  console.addExecuteCommand((const char*)"update_firmware", []() 
+  {
+      usb_serial.printf("Rebooting in UF2 mode in a moment...\n");
+      delay(200);
+      reset_usb_boot(0, 0); 
+  });
+
+  console.addExecuteCommand((const char*)"hello_world", []() 
+  {
+      usb_serial.printf("Hello ");
+      auto s = console.next();
+      usb_serial.printf(s);
+      usb_serial.printf("!\n");
+  });
+
+  console.addExecuteCommand((const char*)"set_motor", []() 
+  {
+      auto motor_index = console.next();
+
+      int val = console.nextInt();
+      val = constrain(val,0,255);
+
+      switch(*motor_index)
+      {
+        case '1':
+        case 'T':
+          {                            
+              analogWrite(GAS_PIN, val);
+              Con_Printf("Setting throttle motor to %d\n", val);
+          }
+          break;
+        case '2':
+        case 'B':
+          {
+              analogWrite(BRAKE_PIN, val);
+              Con_Printf("Setting brake motor to %d\n", val);
+          }
+          break;
+        case '3':
+        case 'C':
+          {
+              analogWrite(CLUTCH_PIN, val);
+              Con_Printf("Setting clutch motor to %d\n", val);
+          }      
+          break;          
+        default:
+            Con_Printf("Unknown motor index! Use 1,2,3 or C,B,T (case sensitive)");
+            break;
+      }
+  });
+
+  console.addExecuteCommand((const char*)"tune", []() 
+  {
+      auto parameter = console.next();
+
+      switch(toupper(*parameter))
+      {          
+          case 'Q':
+            {
+              float val = console.nextFloat();
+              val = constrain(val,0,1);
+              ad620.q = val;      
+              Con_Printf("Set Q to %f\n", ad620.q);      
+            }
+            break;
+      }
+  });
+
+    console.addExecuteCommand((const char*)"calibrate", []() 
+  {
+        ad620.calibrating = !ad620.calibrating;
+  });
 }
 
 void serialThink()
 {
-    if (usb_serial.available()) {
+/*    if (usb_serial.available()) {
     String cmd = usb_serial.readStringUntil('\n');
     cmd.trim();
 
@@ -86,12 +173,14 @@ void serialThink()
     }
 
     
-  }
+  }*/
 }
 
 
 void loop() {
-  serialThink();
+  console.loop();
+  // serialThink();
+  
   
   if (!debug)
   {

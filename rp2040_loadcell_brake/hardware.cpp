@@ -26,10 +26,10 @@ void ad620Init()
     // Калибровка нуля (лучше вынести в отдельную процедуру)
   float sum = 0;
   for(int i=0; i<100; i++) {
-    sum += analogRead(AD620_OUT_PIN) * (MAX_SENSOR_VOLTAGE / 4095.0f);
+    sum += analogRead(AD620_OUT_PIN) * (ad620.max_voltage / 4095.0f);
     delay(10);
   }
-  ZERO_VOLTAGE = sum / 100.0f;
+  ad620.min_voltage = sum / 100.0f;
 }
 
 void usbInit()
@@ -53,7 +53,7 @@ void usbInit()
   // while (!USBDevice.mounted());
 }
 
-void repotBrakeLevel(uint8_t brake_out)
+void reportBrakeLevel(uint8_t brake_out)
 {
     // Отправка отчета
   hid_report.brake = brake_out;
