@@ -2,6 +2,12 @@
 #include "consts.h"
 #include "common.h"
 
+uint32_t lastReport = 0;
+const uint32_t REPORT_INTERVAL = 10; // мс, 100Hz
+
+
+volatile bool hid_report_ready = true;
+
 struct {
   uint8_t brake; // Только ось тормоза 0-255
 } hid_report;
@@ -32,31 +38,54 @@ void ad620Init()
   ad620.min_voltage = sum / 100.0f;
 }
 
+// Callback для GetReport (Input Report)
+void hidReportCallback(uint8_t report_id, hid_report_type_t report_type,
+                        uint8_t const* buffer, uint16_t bufsize) {
+  if (report_type != HID_REPORT_TYPE_INPUT)
+    return;
+
+  
+  usb_hid.sendReport(1, &hid_report, sizeof(hid_report));
+
+}
+
 void usbInit()
 {
-  usb_hid.setReportDescriptor(desc_hid_report, sizeof(desc_hid_report));  
-  usb_hid.begin(); 
+  //usb_hid.setReportDescriptor(desc_hid_report, sizeof(desc_hid_report));  
+  //usb_hid.setReportCallback(0, hidReportCallback);
+  //usb_hid.begin(); 
 
   usb_serial.begin(115200);
-  while (!USBDevice.mounted());
-
-  // Working
-
-  // // Настраиваем HID дескриптор
-  // usb_hid.setReportDescriptor(desc_hid_report, sizeof(desc_hid_report));
-  
-  // // Начинаем работу USB устройств
-  // usb_hid.begin();
-  // usb_serial.begin(115200);
-  
-  // // Ждем подключения к ПК
   // while (!USBDevice.mounted());
+
 }
+
+
 
 void reportBrakeLevel(uint8_t brake_out)
 {
+    if (!usb_hid.ready())
+      return;
+
+    uint32_t now = millis();
+    if (now - lastReport < REPORT_INTERVAL)
+      return; // ещё рано отправлять
+
+    // Не отправляем, если предыдущий отчёт ещё не принят хостом
+    if (!hid_report_ready) 
+      return;
+
+
     // Отправка отчета
-  hid_report.brake = brake_out;
-  if (usb_hid.ready())
-    usb_hid.sendReport(1, &hid_report, sizeof(hid_report));
+    hid_report.brake = brake_out;  
+
+    // Пробуем отправить
+    if (usb_hid.sendReport(1, &hid_report, sizeof(hid_report))) {
+      hid_report_ready = false;  // Ждём подтверждения в callback'е
+      lastReport = now;
+    } else {
+      // Если sendReport вернул false — канал занят, сбрасываем флаг
+      hid_report_ready = true;
+    }
+
 }

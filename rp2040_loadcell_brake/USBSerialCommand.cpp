@@ -65,9 +65,7 @@ void SerialCommand::loop(void)
     {
         c = read();
         bufferHandler(c);
-    }
-
-    // usb_serial.print(buffer);
+    }     
 }
 
 /* Clear buffer */
@@ -88,7 +86,8 @@ void SerialCommand::error(void)
     {
         (*userErrorHandler)();
     }
-
+    
+    Con_Printf("Unknown command: %s\n", buffer);
     clear(); /* Clear buffer */
 }
 
@@ -107,6 +106,7 @@ void SerialCommand::bufferHandler(char c)
     if ((pBuff - buffer) > (SERIAL_CMD_BUFF_LEN - 2)) /* Check buffer overflow */
     {
         error(); /* Send ERROR, Buffer overflow */
+        return;
     }
 
     *pBuff++ = c;  /* Put character into buffer */
@@ -116,7 +116,7 @@ void SerialCommand::bufferHandler(char c)
     {
         /* Get EOL */
         len = strlen(buffer);
-        lastChars = buffer + len - 2;
+        lastChars = buffer + len - strlen(EOL);
 
         /* Compare last chars to EOL */
         if (0 == strcmp(lastChars, EOL))
@@ -172,6 +172,7 @@ bool SerialCommand::commandHandler(void)
 
         for (i = 0; (i < commandCount); i++)
         {          
+            //Con_Printf("%s, %s\n", token, commandList[i].command);
             if (!strncmp(token, commandList[i].command, SERIAL_CMD_BUFF_LEN))
             {
               (*commandList[i].execute)();
@@ -197,10 +198,7 @@ void SerialCommand::addCommand(char *cmd, void (*test)(), void (*read)(), void (
 #endif
 
     commandList = (serialCommandCallback *)realloc(commandList, (commandCount + 1) * sizeof(serialCommandCallback));
-    strncpy(commandList[commandCount].command, cmd, SERIAL_CMD_BUFF_LEN);
-    commandList[commandCount].test = test;
-    commandList[commandCount].read = read;
-    commandList[commandCount].write = write;
+    strncpy(commandList[commandCount].command, cmd, SERIAL_CMD_BUFF_LEN);    
     commandList[commandCount].execute = execute;
     commandCount++;
 }
@@ -259,7 +257,9 @@ float SerialCommand::nextFloat()
 
 int SerialCommand::nextInt()
 {
-    auto s = next();
-    Con_Printf("s=%s\n",s);
-    return atoi(s);
+    auto s = next();    
+    if (s)
+        return atoi(s);
+    else
+        return 0;
 }

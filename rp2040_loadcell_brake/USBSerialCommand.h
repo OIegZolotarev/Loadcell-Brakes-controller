@@ -22,9 +22,6 @@
 typedef struct
 {
     char command[SERIAL_CMD_BUFF_LEN];
-    void (*test)();
-    void (*read)();
-    void (*write)();
     void (*execute)();
 } serialCommandCallback;
 
@@ -38,7 +35,7 @@ const char delimiters[] = " =,?\r\n";
  * <CR> = <Carriage Return, 0x0D, 13, '\r'>
  * <LF> = <Line Feed, 0x0A, 10, '\n'>
  */
-const char EOL[] = "\r\n";
+const char EOL[] = "\n";
 
 class SerialCommand : public Stream
 {
