@@ -35,7 +35,10 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(PedalsController PedalsController.cpp )
+add_executable(PedalsController main.cpp 
+                                usb_descriptors.c
+                                loadcell_pedal.cpp
+                                )
 
 pico_set_program_name(PedalsController "PedalsController")
 pico_set_program_version(PedalsController "0.1")
@@ -46,7 +49,8 @@ pico_enable_stdio_usb(PedalsController 0)
 
 # Add the standard library to the build
 target_link_libraries(PedalsController
-        pico_stdlib)
+        pico_stdlib
+        hardware_adc)
 
 # Add the standard include files to the build
 target_include_directories(PedalsController PRIVATE
@@ -57,7 +61,13 @@ target_include_directories(PedalsController PRIVATE
 target_link_libraries(PedalsController 
         hardware_timer
         hardware_watchdog
+        tinyusb_device
+        tinyusb_board
         )
+
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
 
 pico_add_extra_outputs(PedalsController)
 

@@ -51,9 +51,9 @@ void hidReportCallback(uint8_t report_id, hid_report_type_t report_type,
 
 void usbInit()
 {
-  //usb_hid.setReportDescriptor(desc_hid_report, sizeof(desc_hid_report));  
-  //usb_hid.setReportCallback(0, hidReportCallback);
-  //usb_hid.begin(); 
+  usb_hid.setReportDescriptor(desc_hid_report, sizeof(desc_hid_report));  
+  usb_hid.setReportCallback(0, hidReportCallback);
+  usb_hid.begin(); 
 
   usb_serial.begin(115200);
   // while (!USBDevice.mounted());
