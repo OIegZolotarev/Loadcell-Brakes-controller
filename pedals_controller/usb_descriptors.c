@@ -25,6 +25,7 @@
 
 #include "tusb.h"
 #include "usb_descriptors.h"
+#include <pico/unique_id.h>
 
 /* A combination of interfaces must have a unique product id, since PC will save device driver after the first plug.
  * Same VID/PID with different interface e.g MSC (first), then CDC (later) will possibly cause system error on PC.
@@ -36,6 +37,9 @@
 #define USB_PID (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
                  _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4))
 
+#define USB_VID   0xCafe
+#define USB_BCD   0x0200
+
 //--------------------------------------------------------------------+
 // Device Descriptors
 //--------------------------------------------------------------------+
@@ -43,13 +47,13 @@ tusb_desc_device_t const desc_device =
     {
         .bLength = sizeof(tusb_desc_device_t),
         .bDescriptorType = TUSB_DESC_DEVICE,
-        .bcdUSB = 0x0200,
-        .bDeviceClass = 0x00,
-        .bDeviceSubClass = 0x00,
-        .bDeviceProtocol = 0x00,
+        .bcdUSB = USB_BCD,
+        .bDeviceClass = TUSB_CLASS_MISC,
+        .bDeviceSubClass = MISC_SUBCLASS_COMMON,
+        .bDeviceProtocol = MISC_PROTOCOL_IAD,
         .bMaxPacketSize0 = CFG_TUD_ENDPOINT0_SIZE,
 
-        .idVendor = 0xCafe,
+        .idVendor = USB_VID,
         .idProduct = USB_PID,
         .bcdDevice = 0x0100,
 
@@ -57,7 +61,8 @@ tusb_desc_device_t const desc_device =
         .iProduct = 0x02,
         .iSerialNumber = 0x03,
 
-        .bNumConfigurations = 0x01};
+        .bNumConfigurations = 0x01
+    };
 
 // Invoked when received GET DEVICE DESCRIPTOR
 // Application return pointer to descriptor
@@ -73,8 +78,8 @@ uint8_t const *tud_descriptor_device_cb(void)
 uint8_t const desc_hid_report[] =
     {
         GAMECON_REPORT_DESC_GAMEPAD(HID_REPORT_ID(1)),
-        // GAMECON_REPORT_DESC_LIGHTS(HID_REPORT_ID(2)),
-        };
+        // GAMECON_REPORT_RUMBLES(HID_REPORT_ID(2)),
+    };
 
 // Invoked when received GET HID REPORT DESCRIPTOR
 // Application return pointer to descriptor
@@ -91,21 +96,25 @@ uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance)
 enum
 {
     ITF_NUM_HID,
+    ITF_NUM_CDC_0,    
+    ITF_NUM_CDC_0_DATA,    
     ITF_NUM_TOTAL
 };
 
-#define  CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN)
+#define  CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN + TUD_CDC_DESC_LEN)
 
-#define EPNUM_HID   0x81
 
 uint8_t const desc_configuration[] =
         {
-                // Config number, interface count, string index, total length, attribute, power in mA
-                TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
+            // Config number, interface count, string index, total length, attribute, power in mA
+            TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
 
-                // Interface number, string index, protocol, report descriptor len, EP In & Out address, size & polling interval
-                TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID,
-                                   CFG_TUD_HID_BUFSIZE, 1)
+            // Interface number, string index, protocol, report descriptor len, EP In & Out address, size & polling interval
+            TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID,
+                                CFG_TUD_HID_BUFSIZE, 1),
+
+            // 1st CDC: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
+            TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, 4, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 64),                                   
         };
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR

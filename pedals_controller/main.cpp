@@ -50,6 +50,27 @@ void hid_task(void)
 
 }
 
+static void echo_serial_port(uint8_t itf, uint8_t buf[], uint32_t count) 
+{
+
+    for (uint32_t i = 0; i < count; i++) {
+        tud_cdc_n_write_char(itf, buf[i]);
+        tud_cdc_n_write_char(itf, 'F');
+    }
+    tud_cdc_n_write_flush(itf);
+}
+
+static void cdc_task(void) {
+    uint8_t itf = 0;
+
+    if (tud_cdc_n_available(itf)) {
+        uint8_t buf[64];
+
+        uint32_t count = tud_cdc_n_read(itf, buf, sizeof(buf));
+
+        echo_serial_port(0, buf, count);                
+    }    
+}
 
 int main()
 {
@@ -63,10 +84,13 @@ int main()
 
     while (1)
     {
-        hid_task();
         tud_task(); // tinyusb device task
+        hid_task();
+        cdc_task();        
     }
 }
+
+
 
 //--------------------------------------------------------------------+
 // Device callbacks

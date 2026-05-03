@@ -36,4 +36,9 @@
 #define CFG_TUD_HID             (1)
 #define CFG_TUD_HID_BUFSIZE    (64)
 
+#define EPNUM_HID         0x81
+#define EPNUM_CDC_0_NOTIF 0x82 // Notification endpoint (IN)
+#define EPNUM_CDC_0_OUT   0x03 // Data OUT endpoint
+#define EPNUM_CDC_0_IN    0x84 // Data IN endpoint
+
 #endif
