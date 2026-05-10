@@ -35,9 +35,13 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(PedalsController main.cpp 
-                                usb_descriptors.c
-                                loadcell_pedal.cpp
+file(GLOB cpp_sources     
+     "*.cpp"
+     "*.c"
+     "simhub/*.cpp"
+)
+
+add_executable(PedalsController ${cpp_sources}
                                 )
 
 pico_set_program_name(PedalsController "PedalsController")
@@ -61,6 +65,7 @@ target_include_directories(PedalsController PRIVATE
 target_link_libraries(PedalsController 
         hardware_timer
         hardware_watchdog
+        hardware_pwm
         tinyusb_device
         tinyusb_board
         )

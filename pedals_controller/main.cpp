@@ -4,8 +4,10 @@
 #include "hardware/watchdog.h"
 #include "hardware/adc.h"
 #include "loadcell_pedal.h"
-
+#include "motors.h"
 #include "bsp/board.h"
+#include "cdc_proto.h"
+#include "pico/time.h"
 
 extern "C" {
   #include "tusb.h"
@@ -64,29 +66,46 @@ static void cdc_task(void) {
     uint8_t itf = 0;
 
     if (tud_cdc_n_available(itf)) {
-        uint8_t buf[64];
+        uint8_t buf[CFG_TUD_CDC_RX_BUFSIZE];
 
         uint32_t count = tud_cdc_n_read(itf, buf, sizeof(buf));
 
-        echo_serial_port(0, buf, count);                
+        // echo_serial_port(0, buf, count);                
+        cdcParseData(itf, buf, count);
     }    
 }
 
 int main()
 {
     adc_init();
-
-    brakePedal.initHardware();
-    
     board_init();
+    
+    brakePedal.initHardware();
+    motorsInit();
+
+    
     tusb_init();
     
+    absolute_time_t start = get_absolute_time();
+    // 60 hz обновление моторов
+    const uint motorsUpdateRate = (1000 / 60) * 1000;
 
     while (1)
     {
         tud_task(); // tinyusb device task
         hid_task();
         cdc_task();        
+
+        
+        absolute_time_t end = get_absolute_time();
+        int64_t elapsed_us = absolute_time_diff_us(start, end);
+
+        if (elapsed_us > motorsUpdateRate)
+        {
+            start = end;
+            motorsUpdate();
+        }
+
     }
 }
 
