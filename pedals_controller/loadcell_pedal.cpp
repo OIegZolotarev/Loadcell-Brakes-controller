@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include "pico/stdlib.h"
+
 #include "loadcell_pedal.h"
 #include <cmath>
 #include "hardware/adc.h"
@@ -28,6 +30,8 @@ void LoadCellPedal::initHardware(uint8_t calibrationIterations)
     }
 
     minVoltage = sum / 100.0f;
+
+    printf("Pedal #%d: detected range %f - %f volts\n", adcChannel, minVoltage, maxVoltage);
 }
 float LoadCellPedal::simpleKalman(float newVal)
 {

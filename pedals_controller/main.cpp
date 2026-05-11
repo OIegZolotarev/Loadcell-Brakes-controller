@@ -4,10 +4,15 @@
 #include "hardware/watchdog.h"
 #include "hardware/adc.h"
 #include "loadcell_pedal.h"
+
 #include "motors.h"
 #include "bsp/board.h"
 #include "cdc_proto.h"
 #include "pico/time.h"
+#include "pico/multicore.h"
+
+#include "simhub/simhub.h"
+#include "simhub/arduino_compat.h"
 
 extern "C" {
   #include "tusb.h"
@@ -66,23 +71,34 @@ static void cdc_task(void) {
     uint8_t itf = 0;
 
     if (tud_cdc_n_available(itf)) {
+                
         uint8_t buf[CFG_TUD_CDC_RX_BUFSIZE];
-
         uint32_t count = tud_cdc_n_read(itf, buf, sizeof(buf));
 
-        // echo_serial_port(0, buf, count);                
-        cdcParseData(itf, buf, count);
+        for (size_t i = 0 ; i < count; i++)
+            Serial.core0_pushRX(buf[i]);
+        
     }    
+
+    Serial.core0_popTX(itf);
 }
 
 int main()
 {
+    stdio_init_all();
+    
+    printf("\033[2J\033[H");
+    printf("===================\n");
+    printf("Starting board...\n");
+    printf("===================\n");
+
     adc_init();
     board_init();
     
     brakePedal.initHardware();
     motorsInit();
 
+    multicore_launch_core1(simhub_entry);
     
     tusb_init();
     
@@ -91,11 +107,10 @@ int main()
     const uint motorsUpdateRate = (1000 / 60) * 1000;
 
     while (1)
-    {
+    {        
         tud_task(); // tinyusb device task
         hid_task();
         cdc_task();        
-
         
         absolute_time_t end = get_absolute_time();
         int64_t elapsed_us = absolute_time_diff_us(start, end);

@@ -61,6 +61,18 @@ target_include_directories(PedalsController PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
+include(FetchContent)
+
+# Declare the library you want to download
+FetchContent_Declare(
+  SPSCQueue
+  GIT_REPOSITORY https://github.com/rigtorp/SPSCQueue.git  
+)
+
+# Download and make the library available
+FetchContent_MakeAvailable(SPSCQueue)
+
+
 # Add any user requested libraries
 target_link_libraries(PedalsController 
         hardware_timer
@@ -68,8 +80,12 @@ target_link_libraries(PedalsController
         hardware_pwm
         tinyusb_device
         tinyusb_board
+        pico_multicore  
+        SPSCQueue
         )
 
+
+pico_enable_stdio_uart(PedalsController 1)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

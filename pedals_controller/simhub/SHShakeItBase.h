@@ -2,6 +2,7 @@
 #define __SHSHAKEITBASE_H__
 
 #include "pico/stdlib.h"
+#include "arduino_compat.h"
 
 #define SHShakeitBaseSafetyDelay 1000
 
@@ -11,7 +12,7 @@ private:
 
 public:
 	virtual uint8_t motorCount();
-	virtual const char* providerName();
+	virtual String providerName();
 
 	virtual void safetyStop();
 	void safetyCheck();

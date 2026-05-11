@@ -34,6 +34,8 @@ void motorsInit()
         pwm_set_chan_level(pwm_slices[i], channels[i], 0);
         sleep_ms(TEST_SEQUENCE_PAUSE_MS);        
     }
+
+    printf("motorsInit(): done\n");
 }
 
 void motorsSet(Motor index, uint8_t value)

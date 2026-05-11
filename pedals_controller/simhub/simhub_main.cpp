@@ -1,6 +1,6 @@
+#include "simhub.h"
+#include "SHCommands.h"
 #include "FlowSerial.h"
-
-#define MESSAGE_HEADER 0x03
 
 
 char loop_opt;
@@ -39,20 +39,31 @@ void simhub_loop()
 			else if (loop_opt == 'X')
 			{
 				String xaction = FlowSerialReadStringUntil(' ', '\n');
-				if (xaction == F("list")) Command_ExpandedCommandsList();
-				else if (xaction == F("mcutype")) Command_MCUType();
-				else if (xaction == F("tach")) Command_TachData();
-				else if (xaction == F("speedo")) Command_SpeedoData();
-				else if (xaction == F("boost")) Command_BoostData();
-				else if (xaction == F("temp")) Command_TempData();
-				else if (xaction == F("fuel")) Command_FuelData();
-				else if (xaction == F("cons")) Command_ConsData();
-				else if (xaction == F("encoderscount")) Command_EncodersCount();
+				if (xaction == "list") Command_ExpandedCommandsList();
+				else if (xaction == "mcutype") Command_MCUType();
+				else if (xaction == "tach") Command_TachData();
+				else if (xaction == "speedo") Command_SpeedoData();
+				else if (xaction == "boost") Command_BoostData();
+				else if (xaction == "temp") Command_TempData();
+				else if (xaction == "fuel") Command_FuelData();
+				else if (xaction == "cons") Command_ConsData();
+				else if (xaction == "encoderscount") Command_EncodersCount();
 			}
 		}
 	}
 
 	if (millis() - lastSerialActivity > 5000) {
 		Command_Shutdown();
+	}
+}
+
+void simhub_entry()
+{
+	printf("Started simhub loop on core1\n");
+
+	while(1)
+	{
+		// printf("Hello from simhub loop\n");
+		simhub_loop();
 	}
 }

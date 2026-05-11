@@ -131,7 +131,7 @@ uint8_t const *tud_descriptor_configuration_cb(uint8_t index) {
 // array of pointer to string descriptors
 char const *string_desc_arr[] =
     {
-        (const char[]){0x09, 0x04},                 // Русский
+        (const char[]){0x19, 0x04},                 // Русский
         "Old Orange",                               // 1: Manufacturer
         "LoadCell Pedals with vibration",           // 2: Product
         "123457",                                   // 3: Serials, should use chip ID
