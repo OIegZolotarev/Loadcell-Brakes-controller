@@ -6,7 +6,7 @@
 
 class SerialImpl
 {
-    
+    uint32_t lastNonEmptyRXTime = 0;    
     
     rigtorp::SPSCQueue<uint8_t> rx;
     rigtorp::SPSCQueue<uint8_t> tx;
@@ -25,10 +25,15 @@ public:
     void flush();
     void begin(uint baudRate);
 
-    char read();
+    int read();
 
     size_t available();
 
     void core0_pushRX(char c);
     void core0_popTX(uint8_t);
+
+    uint32_t getLastNoneEmptyRXTime()
+    {
+        return lastNonEmptyRXTime;
+    }
 };

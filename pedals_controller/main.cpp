@@ -78,6 +78,7 @@ static void cdc_task(void) {
         for (size_t i = 0 ; i < count; i++)
             Serial.core0_pushRX(buf[i]);
         
+        // printf("cdc_task(): pushed %d bytes\n", count);
     }    
 
     Serial.core0_popTX(itf);

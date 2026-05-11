@@ -171,23 +171,23 @@ void Command_Features() {
 		FlowSerialPrint("K");
 	}
 
-	// Gear
-	FlowSerialPrint("G");
+	// // Gear
+	// FlowSerialPrint("G");
 
-	// Name
-	FlowSerialPrint("N");
+	// // Name
+	// FlowSerialPrint("N");
 
-	// UniqueID
-	FlowSerialPrint("I");
+	// // UniqueID
+	// FlowSerialPrint("I");
 
-	// Additional buttons
-	FlowSerialPrint("J");
+	// // Additional buttons
+	// FlowSerialPrint("J");
 
-	// Custom Protocol Support
-	FlowSerialPrint("P");
+	// // Custom Protocol Support
+	// FlowSerialPrint("P");
 
-	// Xpanded support
-	FlowSerialPrint("X");
+	// // Xpanded support
+	// FlowSerialPrint("X");
 
 	// RGB MATRIX
 #if defined(INCLUDE_WS2812B_MATRIX) || defined(INCLUDE_DM163_MATRIX) || defined(INCLUDE_SUNFOUNDERSH104P_MATRIX)
@@ -205,6 +205,7 @@ void Command_Features() {
 }
 
 void Command_Motors() {
+
 #if defined(INCLUDE_SHAKEIDUALVNH5019) || defined(INCLUDE_SHAKEITADASHIELD) || defined(INCLUDE_SHAKEITDKSHIELD) || defined(INCLUDE_SHAKEITL298N) || defined(INCLUDE_SHAKEITMOTOMONSTER) || defined(INCLUDE_SHAKEITPWM) || defined(INCLUDE_SHAKEITPWMFANS)
 
 	char action = FlowSerialTimedRead();
@@ -248,7 +249,7 @@ void Command_Motors() {
 		shShakeitDKMotorShield.read();
 #endif
 #ifdef  INCLUDE_SHAKEITL298N
-		// shShakeitL298N.read();
+		shShakeitL298N.read();
 #endif
 #ifdef INCLUDE_SHAKEITMOTOMONSTER
 		shShakeitMotoMonster.read();

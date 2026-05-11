@@ -1,5 +1,6 @@
 #include "arduino_compat.h"
 #include "SHShakeItBase.h"
+#include "FlowSerial.h"
 
 void SHShakeitBase::safetyStop() 
 {
@@ -24,8 +25,8 @@ void SHShakeitBase::read()
 
     for (int motorIdx = 0; motorIdx < motorcount; motorIdx++) 
     {
-        // int value = FlowSerialTimedRead();
-        int value = 0;
+        int value = FlowSerialTimedRead();
+                
         if (value != -1) 
             setMotorOutput(motorIdx, value);
         else 

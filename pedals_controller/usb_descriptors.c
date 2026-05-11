@@ -34,10 +34,13 @@
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
 #define _PID_MAP(itf, n) ((CFG_TUD_##itf) << (n))
-#define USB_PID (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                 _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4))
+// #define USB_PID (0x1000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
+// _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4))
 
-#define USB_VID   0xCafe
+
+#define USB_VID   0xCAFE
+#define USB_PID   0xAE86
+
 #define USB_BCD   0x0200
 
 //--------------------------------------------------------------------+
@@ -131,7 +134,7 @@ uint8_t const *tud_descriptor_configuration_cb(uint8_t index) {
 // array of pointer to string descriptors
 char const *string_desc_arr[] =
     {
-        (const char[]){0x19, 0x04},                 // Русский
+        (const char[]){0x09, 0x04},                 // Русский
         "Old Orange",                               // 1: Manufacturer
         "LoadCell Pedals with vibration",           // 2: Product
         "123457",                                   // 3: Serials, should use chip ID
@@ -168,12 +171,15 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
 
         for (uint8_t i = 0; i < chr_count; i++)
         {
-            _desc_str[1 + i] = str[i];
+            _desc_str[i + 1] = str[i];
         }
     }
 
     // first byte is length (including header), second byte is string type
-    _desc_str[0] = (TUSB_DESC_STRING << 8) | (2 * chr_count + 2);
+    _desc_str[0] = (TUSB_DESC_STRING << 8) | (2*chr_count + 2);
 
     return _desc_str;
 }
+
+
+

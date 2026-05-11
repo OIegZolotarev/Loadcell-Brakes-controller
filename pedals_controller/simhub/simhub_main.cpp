@@ -1,17 +1,20 @@
 #include "simhub.h"
 #include "SHCommands.h"
 #include "FlowSerial.h"
-
+#include "profiler_cookie.h"
 
 char loop_opt;
 unsigned long lastSerialActivity = 0;
 
 void simhub_loop()
 {
+	
 	// Wait for data
 	if (FlowSerialAvailable() > 0) {
 		if (FlowSerialTimedRead() == MESSAGE_HEADER)
 		{
+			// printf("last cmd = %c, delta = %d ms\n", loop_opt,millis() - lastSerialActivity);
+
 			lastSerialActivity = millis();
 			// Read command
 			loop_opt = FlowSerialTimedRead();
@@ -50,6 +53,15 @@ void simhub_loop()
 				else if (xaction == "encoderscount") Command_EncodersCount();
 			}
 		}
+		else
+		{
+			printf("Bad header!!!\n");
+		}
+		
+	}
+	else
+	{
+		// printf("No data!!, Serial.avaible() = %d\n", Serial.available());
 	}
 
 	if (millis() - lastSerialActivity > 5000) {
@@ -57,13 +69,38 @@ void simhub_loop()
 	}
 }
 
+#define LED_PIN PICO_DEFAULT_LED_PIN
+
+
 void simhub_entry()
 {
+	
+	uint32_t nextPinUpdate = millis() + 100;
+	uint8_t pinState = 0;
+
+	gpio_init(LED_PIN);
+	gpio_set_dir(LED_PIN, GPIO_OUT);
+
 	printf("Started simhub loop on core1\n");
 
 	while(1)
 	{
-		// printf("Hello from simhub loop\n");
+
 		simhub_loop();
+
+
+		uint32_t time = millis();
+
+		if (time < (Serial.getLastNoneEmptyRXTime() + 100))
+		{
+			if (time > nextPinUpdate)
+			{
+				pinState = !pinState;
+				gpio_put(LED_PIN, pinState);
+				nextPinUpdate = millis() + 100;			
+			}
+		}
+		else
+			gpio_put(LED_PIN, 0);
 	}
 }

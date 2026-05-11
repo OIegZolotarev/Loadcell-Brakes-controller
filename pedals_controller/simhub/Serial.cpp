@@ -4,6 +4,9 @@ extern "C" {
   #include "tusb.h"
 }
 
+//#define DEBUG_TX
+//#define DEBUG_RX
+
 SerialImpl::SerialImpl() : rx(CFG_TUD_CDC_RX_BUFSIZE), tx(CFG_TUD_CDC_TX_BUFSIZE)
 {
 }
@@ -49,19 +52,40 @@ void SerialImpl::begin(uint baudRate)
     printf("[STUB] SerialImpl::begin\n");
 }
 
-char SerialImpl::read()
+int SerialImpl::read()
 {
-    char c = *rx.front();
+    char * p = (char*)rx.front();
+
+    if (!p)
+        return -1;
+
+    char c = *p;
     rx.pop();
     return c;
 }
 
 size_t SerialImpl::available()
-{
-    if (rx.size() > 0)
-        printf("SerialImpl::available() > 0 (%d)\n", rx.size());
+{   
+    size_t sz = rx.size();
+#ifdef DEBUG_RX
+    if (sz)
+       {
+            printf("SerialImpl::available(%d): ", sz);
+            uint8_t * data = rx.front();
 
-    return rx.size();
+            for (int i = 0 ; i < sz; i++)
+            {
+                printf("0x%.2X ", data[i]);                
+            }
+            printf("\n");
+       }
+       
+#endif
+
+    if (sz)
+        lastNonEmptyRXTime = millis();
+
+    return sz;
 }
 
 void SerialImpl::core0_pushRX(char c)
@@ -71,9 +95,19 @@ void SerialImpl::core0_pushRX(char c)
 
 void SerialImpl::core0_popTX(uint8_t itf)
 {
+
+#ifdef DEBUG_TX
+    if (tx.size() > 0)
+       printf("tx.size() > 0 (%d)\n", tx.size());
+#endif
+    size_t dataSize = tx.size();
+
     for (size_t i = 0; i < tx.size(); i++)
     {
         tud_cdc_n_write_char(itf, (char)*tx.front());
         tx.pop();
     }
+
+    if (dataSize)
+        tud_cdc_n_write_flush(itf);
 }

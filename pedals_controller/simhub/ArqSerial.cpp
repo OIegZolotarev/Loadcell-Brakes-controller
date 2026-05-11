@@ -1,7 +1,8 @@
 #include <pico/stdlib.h>
 #include "ArqSerial.h"
+#include "profiler_cookie.h"
 
-
+size_t consumedBytes = 0;
 
 int ARQSerial::Arq_TimedRead()
 {
@@ -19,6 +20,7 @@ int ARQSerial::Arq_TimedRead()
 			if (testfailidx == 1000)
 				return -1;
 #endif
+			consumedBytes++;
 			return c;
 		}
 	} while (millis() - fsr_startMillis < 100);
@@ -29,6 +31,8 @@ void ARQSerial::ProcessIncomingData()
 {
 	int packetID, length, header, res, i, crc, nextpacketid;
 	byte currentCrc;
+
+	consumedBytes = 0;
 
 	while (Serial.available() > 0) {
 		header = Arq_TimedRead();
@@ -85,8 +89,12 @@ void ARQSerial::ProcessIncomingData()
 				}
 			}
 
+			
+
 			if (reason == 0) {
 				nextpacketid = Arq_LastValidPacket > 127 ? 0 : Arq_LastValidPacket + 1;
+				
+				//printf("\t\t\t(packetID = %d, nextpacketid = %d)\n", packetID, nextpacketid);
 
 				if (packetID == nextpacketid || packetID == 255) {
 					for (i = 0; i < length; i++) {
@@ -123,7 +131,7 @@ void ARQSerial::SendNAcq(uint8_t lastKnownValidPacket, byte reason)
 	Serial.write(0x04);
 	Serial.write(lastKnownValidPacket);
 	Serial.write(reason);
-	Serial.flush();
+	Serial.flush();	
 }
 
 void ARQSerial::setIdleFunction(IdleFunction function)
@@ -150,6 +158,8 @@ void ARQSerial::CustomPacketEnd()
 
 int ARQSerial::read()
 {
+	// PROFILE_FUNCTION();
+
 	unsigned long fsr_startMillis = millis();
 	do {
 		if (idleFunction != 0) idleFunction(false);
@@ -161,6 +171,9 @@ int ARQSerial::read()
 		}
 
 		ProcessIncomingData();
+		// if (consumedBytes > 0)
+		// 	printf("Consumed bytes(read): %d\n", consumedBytes);
+		
 	} while (millis() - fsr_startMillis < 400 || DataBuffer.size() > 0);
 
 	//DebugPrintLn("Read timeout !");
@@ -170,8 +183,10 @@ int ARQSerial::read()
 int ARQSerial::Available()
 {
 	if (idleFunction != 0) idleFunction(false);
-	if (DataBuffer.size() == 0) {
-		ProcessIncomingData();
+	if (DataBuffer.size() == 0) {		
+		ProcessIncomingData();		
+		// if (consumedBytes)
+		// 	printf("Consumed bytes (available): %d, Databuffer.size(): %d\n", consumedBytes, DataBuffer.size());
 	}
 	return DataBuffer.size();
 }
@@ -273,6 +288,7 @@ void ARQSerial::ReadStringUntil(char buffer[], char terminator)
 String ARQSerial::ReadStringUntil(char terminator1, char terminator2)
 {
 	String ret;
+	
 	int c = read();
 	while (c >= 0 && c != terminator1 && c != terminator2)
 	{
